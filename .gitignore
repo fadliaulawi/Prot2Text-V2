@@ -5,5 +5,8 @@ __pycache__
 *.ipynb
 *.pt
 *.pth
+*.parquet
 *tmp*
 .vscode
+data/train/
+data/jsons/

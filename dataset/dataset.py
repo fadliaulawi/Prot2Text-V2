@@ -184,6 +184,7 @@ class Prot2TextInstructDataset(torch_geometric.data.Dataset):
                 "professional language. "
             ), 
             placeholder_token: str = '<|reserved_special_token_1|>', 
+            sample: Optional[int] = None,
             **kwargs,
     ):
         self.root_dir = root_dir
@@ -201,6 +202,7 @@ class Prot2TextInstructDataset(torch_geometric.data.Dataset):
         self.max_description_length = max_description_length
         self.system_message = system_message
         self.placeholder_token = placeholder_token
+        self.sample = sample
 
         self.usable_file_names: List[Union[str, os.PathLike]] = []
         super().__init__(root=root_dir, **kwargs)  # first download then process
@@ -221,7 +223,7 @@ class Prot2TextInstructDataset(torch_geometric.data.Dataset):
         assert self.alphafold_version is not None, (
             "Downloading requested but version of AlphaFoldDB is not set. "
         )
-        for raw_file_name in tqdm(self.raw_file_names):
+        for raw_file_name in tqdm(self.raw_file_names[:self.sample] if self.sample is not None else self.raw_file_names):
             raw_file_name = raw_file_name
             raw_file_path = os.path.join(self.raw_dir, raw_file_name)
             full_url = self.alphafold_base_url + raw_file_name
@@ -254,8 +256,9 @@ class Prot2TextInstructDataset(torch_geometric.data.Dataset):
         )
 
         # graph construction: convert PDB files to tensor files
+        self.num_processes = 1
         with mp.Pool(processes=self.num_processes) as pool:
-            for raw_file_name in self.raw_file_names:
+            for raw_file_name in self.raw_file_names[:self.sample] if self.sample is not None else self.raw_file_names:
                 raw_file_path = os.path.join(self.raw_dir, raw_file_name)
                 processed_file_path = os.path.join(
                     self.processed_dir, 

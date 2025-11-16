@@ -682,9 +682,34 @@ def construct_nx_graph(
         progress.advance(task4)
 
     # Annotate additional graph metadata
+    import json
+    import pickle
+    g_data = nx.node_link_data(g)
+    # Convert any DataFrames to dicts
+    # Recursive function to convert DataFrames
+    # def convert_dataframes(obj):
+    #     if isinstance(obj, pd.DataFrame):
+    #         return obj.to_dict(orient='records')  # or 'list', 'dict', etc.
+    #     elif isinstance(obj, np.ndarray):
+    #         return obj.tolist()  # Convert numpy array to list
+    #     elif isinstance(obj, (np.integer, np.floating)):
+    #         return obj.item()  # Convert numpy scalar to Python scalar
+    #     elif isinstance(obj, dict):
+    #         return {k: convert_dataframes(v) for k, v in obj.items()}
+    #     elif isinstance(obj, list):
+    #         return [convert_dataframes(item) for item in obj]
+    #     else:
+    #         return obj
+
+    # Convert all DataFrames in the graph data
+    # g_data = convert_dataframes(g_data)
+    # with open(f'data/jsons/graph_{str(g)}.json', 'w') as f:
+    #     json.dump(g_data, f, indent=2)
+    # with open(f'data/jsons/{str(g)}', 'wb') as f:
+    #     pickle.dump(g, f)
     # print(g.graph['dssp_df'])
-    if config.graph_metadata_functions is not None:
-        g = annotate_graph_metadata(g, config.graph_metadata_functions)
+    # if config.graph_metadata_functions is not None:
+    #     g = annotate_graph_metadata(g, config.graph_metadata_functions)
 
     # Annotate additional edge metadata
     if config.edge_metadata_functions is not None:
