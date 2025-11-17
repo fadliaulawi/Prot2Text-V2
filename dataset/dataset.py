@@ -55,6 +55,7 @@ import multiprocessing as mp
 import os
 import sys
 from typing import Any, Dict, List, Optional, Union
+import json
 
 from graphein.protein.config import ProteinGraphConfig
 import pandas as pd
@@ -302,6 +303,32 @@ class Prot2TextInstructDataset(torch_geometric.data.Dataset):
                     file=sys.stderr
                 )
 
+    def _tensor_to_serializable(self, obj: Any) -> Any:
+        """
+        Convert PyTorch tensors and PyG Data objects to serializable formats.
+        Tensors are converted to lists, and Data objects are converted to dicts.
+        """
+        if isinstance(obj, torch.Tensor):
+            return obj.tolist()
+        elif isinstance(obj, torch_geometric.data.Data):
+            result = {}
+            for key, value in obj.items():
+                result[key] = self._tensor_to_serializable(value)
+            return result
+        elif isinstance(obj, dict):
+            return {k: self._tensor_to_serializable(v) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [self._tensor_to_serializable(item) for item in obj]
+        elif isinstance(obj, pd.DataFrame):
+            return obj.to_dict()
+        elif isinstance(obj, (pd.Series, pd.Index)):
+            return obj.tolist()
+        elif isinstance(obj, (int, float, str, bool, type(None))):
+            return obj
+        else:
+            # For non-serializable objects, convert to string
+            return str(obj)
+
     def process_text(
             self,
             new_sequence_tokenizer: Optional[PreTrainedTokenizer] = None,
@@ -318,6 +345,11 @@ class Prot2TextInstructDataset(torch_geometric.data.Dataset):
             self.sequence_tokenizer = new_sequence_tokenizer
         if new_description_tokenizer is not None:
             self.description_tokenizer = new_description_tokenizer
+        
+        # Create json directory if it doesn't exist
+        json_dir = os.path.join(self.root_dir, 'json')
+        os.makedirs(json_dir, exist_ok=True)
+        
         for processed_file_name in tqdm(self.usable_file_names):
             processed_file_path = os.path.join(self.processed_dir, processed_file_name)
             try:
@@ -325,6 +357,13 @@ class Prot2TextInstructDataset(torch_geometric.data.Dataset):
                 data = torch.load(processed_file_path)
                 data.update(self._compose_and_tokenize_chat(uniprot_id))
                 torch.save(data, processed_file_path)
+                
+                # Save as JSON (human-readable) in separate json/ directory
+                json_path = os.path.join(json_dir, os.path.splitext(processed_file_name)[0] + ".json")
+                serializable_data = self._tensor_to_serializable(data)
+                with open(json_path, 'w') as f:
+                    json.dump(serializable_data, f, indent=2)
+                    
             except Exception as exception:
                 if self.log:
                     print(

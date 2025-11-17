@@ -2,11 +2,9 @@ __pycache__
 *.csv
 *.err
 *.log
-*.ipynb
 *.pt
 *.pth
 *.parquet
 *tmp*
 .vscode
-data/train/
-data/jsons/
+data
