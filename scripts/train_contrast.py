@@ -34,19 +34,23 @@ from tqdm import tqdm
 from transformers import AutoTokenizer, PreTrainedModel
 from transformers import EsmModel, LlamaModel, LlamaForCausalLM
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from dataset import Prot2TextInstructDataset, Prot2TextInstructDataLoader
 from models import (
     ModalityAdapter, 
     ModalityAdapterConfig, 
     Esm2LlamaInstructForCausalLM
 )
-import scripts.utils_argparse as utils_argparse
+from scripts import utils_argparse
 
 
 argParser = argparse.ArgumentParser()
 
-argParser.add_argument("--esm_path", type=str)
-argParser.add_argument("--llama_path", type=str)
+argParser.add_argument("--esm_path", type=str, default="facebook/esm2_t36_3B_UR50D")
+argParser.add_argument("--llama_path", type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct")
 argParser.add_argument("--root_dataset_dir", type=str)
 argParser.add_argument("--root_csv_dir", type=str)
 argParser.add_argument("--save_checkpoint_dir", type=str)
